@@ -1,0 +1,27 @@
+{
+  "id": "java-cloud",
+  "title": "Java in the cloud-native era",
+  "slug": "java-in-the-cloud-native-era",
+  "category": "JAVA",
+  "tags": ["java", "cloud", "microservices"],
+  "summary": "Cloud-native Java keeps the language useful by combining modern deployment tactics with proven runtime reliability.",
+  "references": [
+    { "label": "Cloud native Java", "url": "https://example.com/cloud-java" }
+  ],
+  "createdAt": "2026-04-25T06:00:00.000Z",
+  "updatedAt": "2026-08-14T09:30:00.000Z",
+  "contentBlocks": [
+    {
+      "id": "java-cloud-1",
+      "type": "heading",
+      "order": 1,
+      "rawJson": { "text": "A reliable runtime still matters" }
+    },
+    {
+      "id": "java-cloud-2",
+      "type": "paragraph",
+      "order": 2,
+      "rawJson": { "text": "Modern deployment practices do not eliminate the need for stable runtimes and disciplined memory management. They increase the value of code that already runs well under pressure." }
+    }
+  ]
+}

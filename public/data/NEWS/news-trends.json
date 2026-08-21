@@ -1,0 +1,27 @@
+{
+  "id": "news-trends",
+  "title": "Three trends shaping digital publishing",
+  "slug": "three-trends-shaping-digital-publishing",
+  "category": "NEWS",
+  "tags": ["news", "design", "platform"],
+  "summary": "Publishers are blending editorial curation with product-grade personalization and a faster feedback loop.",
+  "references": [
+    { "label": "Publishing trends", "url": "https://example.com/publishing-trends" }
+  ],
+  "createdAt": "2026-03-18T11:00:00.000Z",
+  "updatedAt": "2026-08-09T09:00:00.000Z",
+  "contentBlocks": [
+    {
+      "id": "news-trends-1",
+      "type": "heading",
+      "order": 1,
+      "rawJson": { "text": "Focus on editorial clarity" }
+    },
+    {
+      "id": "news-trends-2",
+      "type": "paragraph",
+      "order": 2,
+      "rawJson": { "text": "In a crowded content environment, strong editorial structure matters more than volume. Readers reward quick comprehension and trustworthy summaries." }
+    }
+  ]
+}

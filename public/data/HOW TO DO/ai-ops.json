@@ -1,0 +1,27 @@
+{
+  "id": "ai-ops",
+  "title": "AI operations for resilient teams",
+  "slug": "ai-operations-for-resilient-teams",
+  "category": "AI",
+  "tags": ["ai", "monitoring", "platform"],
+  "summary": "High-performing AI teams design for quality drift, cost control, and trust signal visibility.",
+  "references": [
+    { "label": "Platform reliability", "url": "https://example.com/platform-reliability" }
+  ],
+  "createdAt": "2026-02-07T10:00:00.000Z",
+  "updatedAt": "2026-08-05T13:00:00.000Z",
+  "contentBlocks": [
+    {
+      "id": "ai-ops-1",
+      "type": "heading",
+      "order": 1,
+      "rawJson": { "text": "Operational discipline matters" }
+    },
+    {
+      "id": "ai-ops-2",
+      "type": "paragraph",
+      "order": 2,
+      "rawJson": { "text": "Once a model is in the wild, the product surface area includes logging, prompt changes, edge cases, and human overrides. Monitoring the full loop prevents silent degradation." }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "news-brief",
+  "title": "News brief: product teams focus on trust",
+  "slug": "news-brief-product-teams-focus-on-trust",
+  "category": "NEWS",
+  "tags": ["news", "product", "trust"],
+  "summary": "Teams are prioritizing trust, clarity, and alignment as product expectations rise.",
+  "references": [
+    { "label": "Trust design notes", "url": "https://example.com/trust-design" }
+  ],
+  "createdAt": "2026-03-02T08:00:00.000Z",
+  "updatedAt": "2026-08-04T09:00:00.000Z",
+  "contentBlocks": [
+    {
+      "id": "news-1",
+      "type": "heading",
+      "order": 1,
+      "rawJson": { "text": "The new baseline" }
+    },
+    {
+      "id": "news-2",
+      "type": "paragraph",
+      "order": 2,
+      "rawJson": { "text": "Customers now expect not only capability but also clear explanations, consistent updates, and visible controls. That expectation changes roadmap choices significantly." }
+    }
+  ]
+}

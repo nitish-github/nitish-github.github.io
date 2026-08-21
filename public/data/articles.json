@@ -1,0 +1,19 @@
+{
+  "categories": [
+    {
+      "name": "HOW TO DO",
+      "description": "Guide to using this application with personal firebase and firestore database",
+      "articleIds": ["firebase-connection"]
+    },
+    {
+      "name": "NEWS",
+      "description": "Daily updates and commentary",
+      "articleIds": ["news-brief", "news-trends"]
+    },
+    {
+      "name": "JAVA",
+      "description": "Java platform insights",
+      "articleIds": ["java-core", "java-cloud"]
+    }
+  ]
+}
