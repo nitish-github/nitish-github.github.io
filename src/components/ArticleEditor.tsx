@@ -2,7 +2,7 @@ import { Alert, Autocomplete, Box, Button, Chip, FormControl, InputLabel, MenuIt
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { deleteArticle, fetchCategories, getDataSourceMode, saveArticle } from '../services/articleRepository'
 import { firebaseAuth } from '../firebase/firebase'
-import type { Article, CategoryName, EditorType } from '../types/article'
+import type { Article, ArticleBlock, CategoryId, EditorType } from '../types/article'
 import { CustomEditor } from './CustomEditor'
 import { TiptapEditor } from './TiptapEditor'
 import { LexicalEditor } from './LexicalEditor'
@@ -17,52 +17,84 @@ type Props = {
   onDeleted?: (articleId: string) => void
 }
 
+type ContentBlockDraft = ArticleBlock
+
+function createDefaultContent(editorType: EditorType): Record<string, unknown> | string {
+  if (editorType === 'custom') return ''
+
+  if (editorType === 'lexical') {
+    return {
+      root: {
+        children: [],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+      },
+    }
+  }
+
+  return {
+    type: 'doc',
+    content: [{ type: 'paragraph' }],
+  }
+}
+
+function createDefaultBlock(editorType: EditorType, id = `block-${Date.now()}`): ContentBlockDraft {
+  const content = createDefaultContent(editorType)
+  return {
+    id,
+    type: 'Doc',
+    order: 0,
+    contents: [{
+      id: `${id}-content`,
+      editorType,
+      contents: typeof content === 'string' ? { text: content } : content,
+    }],
+  }
+}
+
 const emptyDraft = {
-  category: '' as CategoryName,
+  categoryId: '',
   title: '',
   slug: '',
   tags: 'ai, workflow',
   summary: '',
   references: 'https://example.com',
-  contentBlocks: {
-    type: 'doc',
-    content: [
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text: 'The article begins here.' }],
-      },
-    ],
-  } as Record<string, unknown>,
-  editorType: 'tiptap' as EditorType,
+  contentBlocks: [createDefaultBlock('tiptap', 'block-initial')],
 }
 
 function toArticleDraft(article: Partial<Article> | null | undefined) {
   if (!article) return emptyDraft
 
-  const editorType = (article.contentBlocks?.[0]?.rawJson?.editor as EditorType) ?? 'custom'
-  const contentData = article.contentBlocks?.[0]?.rawJson
-  const { editor: _editor, contentType: _contentType, ...editorContent } = contentData ?? {}
+  const contentBlocks = Object.values(article.contentBlocks ?? {})
+    .sort((left, right) => left.order - right.order)
+  const normalizedBlocks = contentBlocks.length > 0
+    ? contentBlocks
+    : [createDefaultBlock('tiptap')]
 
   return {
-    category: article.category ?? '',
+    categoryId: article.category_id?.[0] ?? '',
     title: article.title ?? '',
     slug: article.slug ?? '',
     tags: (article.tags ?? []).join(', '),
     summary: article.summary ?? '',
     references: (article.references ?? []).map((reference) => reference.url).join('\n'),
-    contentBlocks: contentData
-      ? editorType === 'custom' && typeof contentData.text === 'string'
-        ? contentData.text
-        : editorContent
-      : '',
-    editorType,
+    contentBlocks: normalizedBlocks,
   }
 }
 
+function getBlockEditorContent(block: ContentBlockDraft): Record<string, unknown> | string {
+  const content = block.contents[0]
+  if (content?.editorType === 'custom' && typeof content.contents.text === 'string') return content.contents.text
+  return content?.contents ?? {}
+}
+
 export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onDeleted }: Props) {
-  const [categories, setCategories] = useState<CategoryName[]>([])
+  const [categories, setCategories] = useState<CategoryId[]>([])
   const [draft, setDraft] = useState(toArticleDraft(article))
-  const [editorContent, setEditorContent] = useState<Record<string, unknown> | string>(draft.contentBlocks)
+  const [contentBlocks, setContentBlocks] = useState<ContentBlockDraft[]>(draft.contentBlocks)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,7 +102,7 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
   useEffect(() => {
     const newDraft = toArticleDraft(article)
     setDraft(newDraft)
-    setEditorContent(newDraft.contentBlocks)
+    setContentBlocks(newDraft.contentBlocks)
   }, [article, mode])
 
   useEffect(() => {
@@ -103,57 +135,61 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
     [draft.references],
   )
 
-  const handleEditorChange = useCallback((value: Record<string, unknown>) => {
-    setEditorContent((previousValue) => (
-      JSON.stringify(previousValue) === JSON.stringify(value) ? previousValue : value
-    ))
+  const handleEditorChange = useCallback((blockId: string, value: Record<string, unknown>) => {
+    setContentBlocks((previousBlocks) => previousBlocks.map((block) => (
+      block.id === blockId && block.contents[0] && JSON.stringify(block.contents[0].contents) !== JSON.stringify(value)
+        ? { ...block, contents: [{ ...block.contents[0], contents: value }] }
+        : block
+    )))
   }, [])
+
+  const handleEditorTypeChange = (blockId: string, editorType: EditorType) => {
+    setContentBlocks((previousBlocks) => previousBlocks.map((block) => {
+      if (block.id !== blockId) return block
+      const content = createDefaultContent(editorType)
+      return {
+        ...block,
+        contents: [{
+          ...(block.contents[0] ?? { id: `${block.id}-content` }),
+          editorType,
+          contents: typeof content === 'string' ? { text: content } : content,
+        }],
+      }
+    }))
+  }
+
+  const addContentBlock = () => {
+    setContentBlocks((previousBlocks) => [
+      ...previousBlocks,
+      createDefaultBlock(previousBlocks.at(-1)?.contents[0]?.editorType ?? 'tiptap'),
+    ])
+  }
+
+  const removeContentBlock = (blockId: string) => {
+    setContentBlocks((previousBlocks) => (
+      previousBlocks.length > 1 ? previousBlocks.filter((block) => block.id !== blockId) : previousBlocks
+    ))
+  }
 
   const buildArticle = (): Article => {
     const title = draft.title.trim()
     const slug = (draft.slug || title).toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    const articleId = article?.id || `${draft.category.toLowerCase()}-${slug}-${Date.now()}`
-
-    // Prepare rawJson based on editor type
-    let rawJson: Record<string, unknown>
-    if (draft.editorType === 'custom') {
-      rawJson = {
-        editor: draft.editorType,
-        contentType: 'custom',
-        text: typeof editorContent === 'string' ? editorContent : JSON.stringify(editorContent),
-      }
-    } else if (typeof editorContent === 'object' && editorContent !== null) {
-      rawJson = {
-        editor: draft.editorType,
-        contentType: draft.editorType,
-        ...(editorContent as Record<string, unknown>),
-      }
-    } else {
-      rawJson = {
-        editor: draft.editorType,
-        contentType: draft.editorType,
-        content: String(editorContent),
-      }
-    }
+    const articleId = article?.id || `${draft.categoryId.toLowerCase()}-${slug}-${Date.now()}`
 
     return {
       id: articleId,
       title,
       slug,
-      category: draft.category,
+      category_id: draft.categoryId ? [draft.categoryId] : [],
       tags,
       summary: draft.summary,
       references,
       createdAt: article?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      contentBlocks: [
-        {
-          id: `block-${Date.now()}`,
-          type: 'paragraph',
-          order: 1,
-          rawJson,
-        },
-      ],
+      contentBlocks: Object.fromEntries(contentBlocks.map((block, index) => [
+        index,
+        { ...block, order: index },
+      ])),
     }
   }
 
@@ -205,10 +241,10 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
         <Autocomplete
           freeSolo
           options={categories}
-          value={draft.category}
-          onChange={(_, value) => setDraft((prev) => ({ ...prev, category: value ?? '' }))}
-          onInputChange={(_, value) => setDraft((prev) => ({ ...prev, category: value }))}
-          renderInput={(params) => <TextField {...params} label="Category" />}
+          value={draft.categoryId}
+          onChange={(_, value) => setDraft((prev) => ({ ...prev, categoryId: value ?? '' }))}
+          onInputChange={(_, value) => setDraft((prev) => ({ ...prev, categoryId: value }))}
+          renderInput={(params) => <TextField {...params} label="Category ID" />}
         />
 
         <TextField
@@ -245,36 +281,66 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
           onChange={(event) => setDraft((prev) => ({ ...prev, references: event.target.value }))}
         />
 
-        <FormControl fullWidth>
-          <InputLabel id="editor-type-label">Editor Type</InputLabel>
-          <Select
-            labelId="editor-type-label"
-            value={draft.editorType}
-            label="Editor Type"
-            onChange={(event) => {
-              const newEditorType = event.target.value as EditorType
-              setDraft((prev) => ({ ...prev, editorType: newEditorType }))
-            }}
-          >
-            <MenuItem value="custom">Custom (Plain Text)</MenuItem>
-            <MenuItem value="tiptap">Tiptap Editor</MenuItem>
-            <MenuItem value="lexical">Lexical Editor</MenuItem>
-          </Select>
-        </FormControl>
-
         <Box>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Content ({draft.editorType} editor)
-          </Typography>
-          {draft.editorType === 'custom' && (
-            <CustomEditor content={editorContent} onChange={handleEditorChange} editable={true} />
-          )}
-          {draft.editorType === 'tiptap' && (
-            <TiptapEditor content={editorContent} onChange={handleEditorChange} editable={true} />
-          )}
-          {draft.editorType === 'lexical' && (
-            <LexicalEditor content={editorContent} onChange={handleEditorChange} editable={true} />
-          )}
+          <Stack direction="row" sx={{ mb: 1 }}>
+            <Typography variant="subtitle1">
+              Content
+            </Typography>
+            <Button variant="outlined" size="small" onClick={addContentBlock}>
+              Add content block
+            </Button>
+          </Stack>
+          <Stack spacing={2}>
+            {contentBlocks.map((block, index) => (
+              <Box key={block.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2">Block {index + 1}</Typography>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id={`editor-type-label-${block.id}`}>Editor</InputLabel>
+                    <Select
+                      labelId={`editor-type-label-${block.id}`}
+                      value={block.contents[0]?.editorType ?? 'tiptap'}
+                      label="Editor"
+                      onChange={(event) => handleEditorTypeChange(block.id, event.target.value as EditorType)}
+                    >
+                      <MenuItem value="custom">Custom</MenuItem>
+                      <MenuItem value="tiptap">Tiptap</MenuItem>
+                      <MenuItem value="lexical">Lexical</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Button
+                    color="error"
+                    size="small"
+                    onClick={() => removeContentBlock(block.id)}
+                    disabled={contentBlocks.length === 1}
+                  >
+                    Remove
+                  </Button>
+                </Stack>
+                {(block.contents[0]?.editorType ?? 'tiptap') === 'custom' && (
+                  <CustomEditor
+                    content={getBlockEditorContent(block)}
+                    onChange={(value) => handleEditorChange(block.id, value)}
+                    editable={true}
+                  />
+                )}
+                {(block.contents[0]?.editorType ?? 'tiptap') === 'tiptap' && (
+                  <TiptapEditor
+                    content={getBlockEditorContent(block)}
+                    onChange={(value) => handleEditorChange(block.id, value)}
+                    editable={true}
+                  />
+                )}
+                {(block.contents[0]?.editorType ?? 'tiptap') === 'lexical' && (
+                  <LexicalEditor
+                    content={getBlockEditorContent(block)}
+                    onChange={(value) => handleEditorChange(block.id, value)}
+                    editable={true}
+                  />
+                )}
+              </Box>
+            ))}
+          </Stack>
         </Box>
 
         {tags.length > 0 && (

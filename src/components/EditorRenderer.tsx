@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 import { CustomReader } from './CustomReader'
 import { LexicalReader } from './LexicalReader'
 import { TiptapReader } from './TiptapReader'
-import type { ContentSourceKey } from '../types/article'
+import type { EditorType } from '../types/article'
 
 type Props = {
-  kind: ContentSourceKey
+  kind: EditorType
   content?: string
   rawJson?: Record<string, unknown>
 }

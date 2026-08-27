@@ -1,12 +1,12 @@
 import { collection, deleteDoc, doc, getDocs, query, setDoc, where } from 'firebase/firestore'
-import type { Article, CategoryName } from '../types/article'
+import type { Article, CategoryId } from '../types/article'
 import { firebaseDb } from '../firebase/firebase'
 
-export async function fetchArticlesFromFirebase(category?: CategoryName): Promise<Article[]> {
+export async function fetchArticlesFromFirebase(category?: CategoryId): Promise<Article[]> {
   try {
     const articlesCollection = collection(firebaseDb, 'articles')
     const snapshot = category
-      ? await getDocs(query(articlesCollection, where('category', '==', category)))
+      ? await getDocs(query(articlesCollection, where('category_id', 'array-contains', category)))
       : await getDocs(articlesCollection)
 
     return snapshot.docs.map((docSnapshot) => docSnapshot.data() as Article)

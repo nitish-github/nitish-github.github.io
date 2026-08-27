@@ -1,11 +1,11 @@
 import { Box, Button, Paper, Stack } from '@mui/material'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { ArticleReader } from '../components/ArticleReader'
-import type { Article, CategoryName } from '../types/article'
+import type { Article, CategoryId } from '../types/article'
 
 type OutletContext = {
   article: Article | null
-  category: CategoryName
+  category: CategoryId
 }
 
 export function ArticleHomePage() {

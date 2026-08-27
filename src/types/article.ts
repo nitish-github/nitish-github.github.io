@@ -1,19 +1,21 @@
-export type CategoryName = string
-
 export type DataSourceMode = 'sqlite' | 'firestore'
+
+export type CategoryId = string
+
+export type Category = {
+  id: CategoryId
+  name: string
+  description: string
+}
 
 export type EditorType = 'custom' | 'tiptap' | 'lexical'
 
-export type ContentSourceKey = 'custom' | 'tiptap' | 'lexical'
+export type ContentType = 'Doc' | 'Questions' | 'quote' | 'list' | 'code'
 
-export type ArticleContentBlock = {
+export type contentBlock = {
   id: string
-  type: 'paragraph' | 'heading' | 'quote' | 'list' | 'code'
-  order: number
-  rawJson: Record<string, unknown> & {
-    editor?: EditorType | string
-    contentType?: ContentSourceKey | string
-  }
+  editorType: EditorType
+  contents: Record<string, unknown> // The raw JSON data from the editor, which can be used to reconstruct the content block in the editor.
 }
 
 export type ArticleReference = {
@@ -21,21 +23,28 @@ export type ArticleReference = {
   url: string
 }
 
+export type ArticleBlock = {
+  id: string
+  type: ContentType
+  order: number
+  contents: contentBlock[]
+}
+
 export type Article = {
   id: string
   title: string
   slug: string
-  category: CategoryName
+  category_id: CategoryId[]
   tags: string[]
   summary: string
   references: ArticleReference[]
   createdAt: string
   updatedAt: string
-  contentBlocks: ArticleContentBlock[]
+  contentBlocks: Record<number, ArticleBlock> //number is sequence number of the content block in the article, starting from 0 
 }
 
 export type CategoryManifestItem = {
-  name: CategoryName
+  category_id: CategoryId
   description: string
   articleIds: string[]
 }

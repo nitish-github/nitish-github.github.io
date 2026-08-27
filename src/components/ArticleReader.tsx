@@ -19,7 +19,9 @@ export function ArticleReader({ article }: Props) {
   return (
     <Box sx={{ p: 3, maxWidth: 860, mx: 'auto' }}>
       <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
-        <Chip label={article.category} color="primary" variant="filled" />
+        {article.category_id.map((categoryId) => (
+          <Chip key={categoryId} label={categoryId} color="primary" variant="filled" />
+        ))}
         {article.tags.map((tag) => (
           <Chip key={tag} label={tag} variant="outlined" />
         ))}
@@ -35,28 +37,16 @@ export function ArticleReader({ article }: Props) {
 
       <Divider sx={{ my: 3 }} />
 
-      {article.contentBlocks
-        .slice()
+      {Object.values(article.contentBlocks)
         .sort((a, b) => a.order - b.order)
-        .map((block) => {
-          const content = getBlockText(block)
-          const kind = getEditorType(block.rawJson)
-
-          if (block.type === 'heading') {
-            return (
-              <Box key={block.id} sx={{ mt: 3, mb: 2 }}>
-                {kind === 'custom' ? (
-                  <Typography variant="h5">{content || 'Heading'}</Typography>
-                ) : (
-                  <EditorRenderer kind={kind} content={content || 'Heading'} rawJson={block.rawJson} />
-                )}
-              </Box>
-            )
-          }
+        .flatMap((block) => block.contents.map((contentBlock) => ({ block, contentBlock })))
+        .map(({ block, contentBlock }) => {
+          const content = getBlockText(contentBlock)
+          const kind = getEditorType(contentBlock.contents)
 
           return (
-            <Box key={block.id} sx={{ mb: 2 }}>
-              <EditorRenderer kind={kind} content={content || 'Paragraph'} rawJson={block.rawJson} />
+            <Box key={`${block.id}-${contentBlock.id}`} sx={{ mb: 2 }}>
+              <EditorRenderer kind={kind} content={content || block.type} rawJson={contentBlock.contents} />
             </Box>
           )
         })}

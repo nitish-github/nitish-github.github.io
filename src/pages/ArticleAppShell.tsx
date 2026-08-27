@@ -4,15 +4,15 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router-dom'
 import { firebaseAuth } from '../firebase/firebase'
-import type { Article, CategoryName } from '../types/article'
+import type { Article, CategoryId } from '../types/article'
 import { fetchCategories, fetchCategoryArticles, getCachedCategoryArticles, getDataSourceMode } from '../services/articleRepository'
 
 export function ArticleAppShell() {
   const navigate = useNavigate()
   const { category, slug } = useParams()
-  const [categories, setCategories] = useState<CategoryName[]>([])
-  const [articlesByCategory, setArticlesByCategory] = useState<Record<CategoryName, Article[]>>({})
-  const [selectedCategory, setSelectedCategory] = useState<CategoryName>((category as CategoryName) || '')
+  const [categories, setCategories] = useState<CategoryId[]>([])
+  const [articlesByCategory, setArticlesByCategory] = useState<Record<CategoryId, Article[]>>({})
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>((category as CategoryId) || '')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [email, setEmail] = useState('demo@example.com')
   const [password, setPassword] = useState('password123')
@@ -56,8 +56,8 @@ export function ArticleAppShell() {
   }, [category])
 
   useEffect(() => {
-    if (category && categories.includes(category as CategoryName)) {
-      setSelectedCategory(category as CategoryName)
+    if (category && categories.includes(category as CategoryId)) {
+      setSelectedCategory(category as CategoryId)
     }
   }, [categories, category])
 
@@ -69,7 +69,7 @@ export function ArticleAppShell() {
   )
 
   useEffect(() => {
-    if (category && categories.includes(category as CategoryName) && !slug && currentArticle && currentArticle.category === selectedCategory) {
+    if (category && categories.includes(category as CategoryId) && !slug && currentArticle && currentArticle.category_id.includes(selectedCategory)) {
       navigate(`/${selectedCategory}/${currentArticle.slug}`, { replace: true })
     }
   }, [category, currentArticle, navigate, selectedCategory, slug])

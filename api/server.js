@@ -18,7 +18,7 @@ db.exec(`
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     slug TEXT NOT NULL,
-    category TEXT NOT NULL,
+    category_id TEXT NOT NULL,
     tags TEXT NOT NULL,
     summary TEXT NOT NULL,
     \`references\` TEXT NOT NULL,
@@ -28,6 +28,12 @@ db.exec(`
   )
 `)
 
+const columns = db.prepare('PRAGMA table_info(articles)').all()
+if (columns.some((column) => column.name === 'category') && !columns.some((column) => column.name === 'category_id')) {
+  db.exec('ALTER TABLE articles ADD COLUMN category_id TEXT NOT NULL DEFAULT "[]"')
+  db.prepare('UPDATE articles SET category_id = json_array(category)').run()
+}
+
 app.use(cors())
 app.use(express.json())
 
@@ -35,7 +41,7 @@ const normalizeArticle = (row) => ({
   id: row.id,
   title: row.title,
   slug: row.slug,
-  category: row.category,
+  category_id: JSON.parse(row.category_id),
   tags: JSON.parse(row.tags),
   summary: row.summary,
   references: JSON.parse(row.references),
@@ -49,8 +55,9 @@ app.get('/health', (_, res) => {
 })
 
 app.get('/api/categories', (_, res) => {
-  const rows = db.prepare('SELECT DISTINCT category FROM articles ORDER BY category ASC').all()
-  res.json({ categories: rows.map((row) => row.category) })
+  const rows = db.prepare('SELECT category_id FROM articles').all()
+  const categories = [...new Set(rows.flatMap((row) => JSON.parse(row.category_id)))].sort()
+  res.json({ categories })
 })
 
 app.get('/api/articles', (_, res) => {
@@ -60,14 +67,14 @@ app.get('/api/articles', (_, res) => {
 
 app.get('/api/articles/:category', (req, res) => {
   const rows = db
-    .prepare('SELECT * FROM articles WHERE category = ? ORDER BY updatedAt DESC')
+    .prepare('SELECT * FROM articles WHERE EXISTS (SELECT 1 FROM json_each(category_id) WHERE value = ?) ORDER BY updatedAt DESC')
     .all(req.params.category)
   res.json({ articles: rows.map(normalizeArticle) })
 })
 
 app.get('/api/articles/:category/:slug', (req, res) => {
   const row = db
-    .prepare('SELECT * FROM articles WHERE category = ? AND slug = ?')
+    .prepare('SELECT * FROM articles WHERE EXISTS (SELECT 1 FROM json_each(category_id) WHERE value = ?) AND slug = ?')
     .get(req.params.category, req.params.slug)
 
   if (!row) {
@@ -84,7 +91,7 @@ app.post('/api/articles', (req, res) => {
     id: payload.id || `${Date.now()}`,
     title: payload.title || 'Untitled article',
     slug: payload.slug || payload.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `article-${Date.now()}`,
-    category: payload.category || 'Uncategorized',
+    category_id: JSON.stringify(payload.category_id || []),
     tags: JSON.stringify(payload.tags || []),
     summary: payload.summary || '',
     references: JSON.stringify(payload.references || []),
@@ -97,11 +104,11 @@ app.post('/api/articles', (req, res) => {
 
   if (existing) {
     db.prepare(
-      `UPDATE articles SET title = ?, slug = ?, category = ?, tags = ?, summary = ?, \`references\` = ?, updatedAt = ?, contentBlocks = ? WHERE id = ?`,
+      `UPDATE articles SET title = ?, slug = ?, category_id = ?, tags = ?, summary = ?, \`references\` = ?, updatedAt = ?, contentBlocks = ? WHERE id = ?`,
     ).run(
       article.title,
       article.slug,
-      article.category,
+      article.category_id,
       article.tags,
       article.summary,
       article.references,
@@ -111,12 +118,12 @@ app.post('/api/articles', (req, res) => {
     )
   } else {
     db.prepare(
-      `INSERT INTO articles (id, title, slug, category, tags, summary, \`references\`, createdAt, updatedAt, contentBlocks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO articles (id, title, slug, category_id, tags, summary, \`references\`, createdAt, updatedAt, contentBlocks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       article.id,
       article.title,
       article.slug,
-      article.category,
+      article.category_id,
       article.tags,
       article.summary,
       article.references,
@@ -136,7 +143,7 @@ app.put('/api/articles/:id', (req, res) => {
     id: articleId,
     title: payload.title || 'Untitled article',
     slug: payload.slug || payload.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `article-${Date.now()}`,
-    category: payload.category || 'Uncategorized',
+    category_id: JSON.stringify(payload.category_id || []),
     tags: JSON.stringify(payload.tags || []),
     summary: payload.summary || '',
     references: JSON.stringify(payload.references || []),
@@ -153,11 +160,11 @@ app.put('/api/articles/:id', (req, res) => {
   }
 
   db.prepare(
-    `UPDATE articles SET title = ?, slug = ?, category = ?, tags = ?, summary = ?, \`references\` = ?, updatedAt = ?, contentBlocks = ? WHERE id = ?`,
+    `UPDATE articles SET title = ?, slug = ?, category_id = ?, tags = ?, summary = ?, \`references\` = ?, updatedAt = ?, contentBlocks = ? WHERE id = ?`,
   ).run(
     article.title,
     article.slug,
-    article.category,
+    article.category_id,
     article.tags,
     article.summary,
     article.references,

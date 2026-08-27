@@ -1,4 +1,4 @@
-import type { Article, ArticleManifest, CategoryName, DataSourceMode } from '../types/article'
+import type { Article, ArticleManifest, CategoryId, DataSourceMode } from '../types/article'
 import { readCache, writeCache } from '../lib/idb'
 import { deleteArticleFromFirebase, fetchArticlesFromFirebase, saveArticleToFirebase } from './firebaseRepository'
 
@@ -29,24 +29,24 @@ export async function fetchArticleManifest(): Promise<ArticleManifest> {
   return response.json() as Promise<ArticleManifest>
 }
 
-export async function fetchCategories(): Promise<CategoryName[]> {
+export async function fetchCategories(): Promise<CategoryId[]> {
   if (readDataSource() === 'firestore') {
     const articles = await fetchArticlesFromFirebase()
-    return [...new Set(articles.map((article) => article.category))].sort()
+    return [...new Set(articles.flatMap((article) => article.category_id))].sort()
   }
 
   const manifest = await fetchArticleManifest()
-  return manifest.categories.map((item) => item.name)
+  return manifest.categories.map((item) => item.category_id)
 }
 
-export async function fetchCategoryArticles(category: CategoryName): Promise<Article[]> {
+export async function fetchCategoryArticles(category: CategoryId): Promise<Article[]> {
   if (readDataSource() === 'firestore') {
     return fetchArticlesFromFirebase(category)
   }
 
   const categoryKey = `${category.toLowerCase()}-articles`
   const manifest = await fetchArticleManifest()
-  const entries = manifest.categories.find((item) => item.name === category)
+  const entries = manifest.categories.find((item) => item.category_id === category)
 
   if (!entries) {
     return []
@@ -66,12 +66,12 @@ export async function fetchCategoryArticles(category: CategoryName): Promise<Art
   return articles
 }
 
-export async function getCachedCategoryArticles(category: CategoryName): Promise<Article[] | null> {
+export async function getCachedCategoryArticles(category: CategoryId): Promise<Article[] | null> {
   const categoryKey = `${category.toLowerCase()}-articles`
   return readCache<Article[]>(categoryKey)
 }
 
-export async function fetchArticleBySlug(category: CategoryName, slug: string): Promise<Article | null> {
+export async function fetchArticleBySlug(category: CategoryId, slug: string): Promise<Article | null> {
   if (readDataSource() === 'firestore') {
     const articles = await fetchArticlesFromFirebase(category)
     return articles.find((article) => article.slug === slug) ?? null
@@ -85,7 +85,7 @@ export async function fetchArticleBySlug(category: CategoryName, slug: string): 
   return (await response.json()) as Article
 }
 
-export async function fetchArticlesFromApi(category?: CategoryName): Promise<Article[]> {
+export async function fetchArticlesFromApi(category?: CategoryId): Promise<Article[]> {
   const query = category ? `/api/articles/${category}` : '/api/articles'
   const response = await fetch(`${sqliteApiBase}${query}`)
   if (!response.ok) {

@@ -1,4 +1,6 @@
-import type { ArticleContentBlock, ContentSourceKey, EditorType } from '../types/article'
+import type { contentBlock, EditorType } from '../types/article'
+
+export type ContentSourceKey = EditorType
 
 type EditorTextSource = {
   text?: string
@@ -21,8 +23,8 @@ export function getEditorType(rawJson: Record<string, unknown> | undefined): Edi
   return getContentType(rawJson) as EditorType
 }
 
-export function getBlockText(block: ArticleContentBlock): string {
-  const raw = block.rawJson as EditorTextSource & {
+export function getBlockText(block: contentBlock): string {
+  const raw = block.contents as EditorTextSource & {
     editor?: EditorType | string
     type?: string
     text?: string
