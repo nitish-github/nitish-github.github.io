@@ -19,6 +19,11 @@ type Props = {
 
 type ContentBlockDraft = ArticleBlock
 
+function buildGeneratedSlug(title: string, id: string): string {
+  const normalizedTitle = title.trim() || 'untitled'
+  return `${normalizedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${id}`.replace(/^-+|-+$/g, '')
+}
+
 function createDefaultContent(editorType: EditorType): Record<string, unknown> | string {
   if (editorType === 'custom') return ''
 
@@ -91,6 +96,10 @@ function getBlockEditorContent(block: ContentBlockDraft): Record<string, unknown
   return content?.contents ?? {}
 }
 
+function areDraftsEqual(left: ReturnType<typeof toArticleDraft>, right: ReturnType<typeof toArticleDraft>) {
+  return JSON.stringify(left) === JSON.stringify(right)
+}
+
 export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onDeleted }: Props) {
   const [categories, setCategories] = useState<CategoryId[]>([])
   const [draft, setDraft] = useState(toArticleDraft(article))
@@ -101,8 +110,22 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
 
   useEffect(() => {
     const newDraft = toArticleDraft(article)
-    setDraft(newDraft)
-    setContentBlocks(newDraft.contentBlocks)
+
+    setDraft((currentDraft) => {
+      if (areDraftsEqual(currentDraft, newDraft)) {
+        return currentDraft
+      }
+
+      return newDraft
+    })
+
+    setContentBlocks((currentBlocks) => {
+      if (JSON.stringify(currentBlocks) === JSON.stringify(newDraft.contentBlocks)) {
+        return currentBlocks
+      }
+
+      return newDraft.contentBlocks
+    })
   }, [article, mode])
 
   useEffect(() => {
@@ -173,8 +196,8 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
 
   const buildArticle = (): Article => {
     const title = draft.title.trim()
-    const slug = (draft.slug || title).toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    const articleId = article?.id || `${draft.categoryId.toLowerCase()}-${slug}-${Date.now()}`
+    const articleId = article?.id || `${draft.categoryId.toLowerCase()}-${Date.now()}`
+    const slug = buildGeneratedSlug(title, articleId)
 
     return {
       id: articleId,
@@ -205,6 +228,9 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
 
       const payload = buildArticle()
       const saved = await saveArticle(payload)
+      const nextDraft = toArticleDraft(saved)
+      setDraft(nextDraft)
+      setContentBlocks(nextDraft.contentBlocks)
       setStatus(mode === 'edit' ? 'Article updated.' : 'Article created.')
       onSaved?.(saved)
     } catch (submitError) {
@@ -253,11 +279,14 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
           onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
         />
 
-        <TextField
-          label="Slug"
-          value={draft.slug}
-          onChange={(event) => setDraft((prev) => ({ ...prev, slug: event.target.value }))}
-        />
+        {(mode === 'edit' || draft.slug) && (
+          <TextField
+            label="Slug"
+            value={draft.slug}
+            slotProps={{ htmlInput: { readOnly: true } }}
+            helperText={mode === 'create' ? 'Generated automatically on save.' : 'Auto-generated from title and id.'}
+          />
+        )}
 
         <TextField
           label="Tags"

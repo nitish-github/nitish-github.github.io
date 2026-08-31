@@ -1,8 +1,8 @@
 import { createTheme } from '@mui/material/styles'
 
-export const appTheme = createTheme({
+export const appTheme = (mode: 'light' | 'dark' = 'light') => createTheme({
   palette: {
-    mode: 'light',
+    mode,
     primary: {
       main: '#6d28d9',
     },
@@ -10,8 +10,8 @@ export const appTheme = createTheme({
       main: '#1d4ed8',
     },
     background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
+      default: mode === 'dark' ? '#111827' : '#f8fafc',
+      paper: mode === 'dark' ? '#1f2937' : '#ffffff',
     },
   },
   typography: {
