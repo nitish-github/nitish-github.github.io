@@ -1,7 +1,7 @@
 import type { Article, ArticleManifest, CategoryId, DataSourceMode } from '../types/article'
-import { readCache, writeCache } from '../lib/idb'
+import { readCache, writeCache } from './idb'
 import { deleteArticleFromFirebase, fetchArticlesFromFirebase, saveArticleToFirebase } from './firebaseRepository'
-import { getAuthToken } from './localAuth'
+import { getAuthToken } from '../auth/localAuth'
 
 const manifestUrl = '/data/articles.json'
 const sqliteApiBase = 'http://localhost:3001'

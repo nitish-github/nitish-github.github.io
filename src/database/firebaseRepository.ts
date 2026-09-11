@@ -1,6 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import type { Article, CategoryId } from '../types/article'
-import { firebaseDb } from '../firebase/firebase'
+import { firebaseDb } from './firebase'
 
 export async function fetchArticlesFromFirebase(category?: CategoryId): Promise<Article[]> {
   try {

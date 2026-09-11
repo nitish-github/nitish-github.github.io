@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { CustomReader } from './CustomReader'
-import { LexicalReader } from './LexicalReader'
-import { TiptapReader } from './TiptapReader'
+import { CustomReader } from './custom/CustomReader'
+import { LexicalReader } from './lexical/LexicalReader'
+import { TiptapReader } from './tiptap/TiptapReader'
 import type { EditorType } from '../types/article'
 
 type Props = {

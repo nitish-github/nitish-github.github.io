@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { LocalUser, ThemeMode } from '../services/localAuth'
+import type { LocalUser, ThemeMode } from './localAuth'
 
 export type AuthContextValue = {
   user: LocalUser | null

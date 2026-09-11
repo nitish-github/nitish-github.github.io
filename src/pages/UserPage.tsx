@@ -1,10 +1,10 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { ArticleEditor } from '../components/ArticleEditor'
+import { ArticleEditor } from '../ArticleEditor'
 import type { Article } from '../types/article'
 
-export function AdminPage() {
+export function UserPage() {
   const location = useLocation()
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
 
@@ -25,7 +25,7 @@ export function AdminPage() {
   return (
     <Box sx={{ p: 3, maxWidth: 1100, mx: 'auto' }}>
       <Typography variant="h4" sx={{ mb: 2 }}>
-        Admin console
+        User console
       </Typography>
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>

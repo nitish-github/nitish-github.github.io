@@ -120,7 +120,7 @@ function EditorToolbar({ editable }: { editable: boolean }) {
 
 function ImagePastePlugin({ editable }: { editable: boolean }) {
   const [editor] = useLexicalComposerContext()
-  return <ContentEditable style={{ outline: 'none', minHeight: 180, padding: '16px', fontSize: '16px', lineHeight: '1.5' }} onPaste={(event) => {
+  return <ContentEditable style={{ outline: 'none', minHeight: 180, padding: '16px', fontSize: '1rem', lineHeight: '1.5' }} onPaste={(event) => {
     if (!editable) return
     const image = Array.from(event.clipboardData.files).find((file) => file.type.startsWith('image/'))
     if (!image) return
@@ -176,7 +176,7 @@ export function LexicalEditor({ content, onChange, editable = true }: LexicalEdi
                 position: 'absolute',
                 top: '16px',
                 left: '16px',
-                fontSize: '16px',
+                fontSize: '1rem',
                 color: '#999',
                 pointerEvents: 'none',
               }}

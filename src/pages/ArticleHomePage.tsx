@@ -16,7 +16,7 @@ export function ArticleHomePage() {
     <Box sx={{ p: 3 }}>
       <Stack direction="row" sx={{ mb: 2, justifyContent: 'flex-end' }}>
         {article && (
-          <Button variant="contained" onClick={() => navigate('/admin', { state: { article } })}>
+          <Button variant="contained" onClick={() => navigate('/user', { state: { article } })}>
             Edit article
           </Button>
         )}

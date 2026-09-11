@@ -3,10 +3,10 @@ import MenuIcon from '@mui/icons-material/Menu'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { firebaseAuth } from '../firebase/firebase'
-import { useAuth } from '../components/useAuth'
+import { firebaseAuth } from '../database/firebase'
+import { useAuth } from '../auth/useAuth'
 import type { Article, CategoryId } from '../types/article'
-import { fetchCategories, fetchCategoryArticles, fetchMyArticles, getCachedCategoryArticles, getDataSourceMode } from '../services/articleRepository'
+import { fetchCategories, fetchCategoryArticles, fetchMyArticles, getCachedCategoryArticles, getDataSourceMode } from '../database/articleRepository'
 
 export function ArticleAppShell() {
   const navigate = useNavigate()
@@ -189,7 +189,7 @@ export function ArticleAppShell() {
 
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             {isSqliteMode && user && (
-              <Button variant="contained" size="small" onClick={() => navigate('/admin', { state: { article: null } })}>
+              <Button variant="contained" size="small" onClick={() => navigate('/user', { state: { article: null } })}>
                 New article
               </Button>
             )}

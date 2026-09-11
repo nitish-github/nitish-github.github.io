@@ -1,5 +1,5 @@
 import { Box, Chip, Divider, Link, List, ListItem, Stack, Typography } from '@mui/material'
-import { EditorRenderer } from './EditorRenderer'
+import { EditorRenderer } from '../editor/EditorRenderer'
 import { getBlockText, getEditorType } from '../lib/editorAdapters'
 import type { Article } from '../types/article'
 

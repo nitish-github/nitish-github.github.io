@@ -1,8 +1,8 @@
 import { Alert, Box, Button, Stack, Typography } from '@mui/material'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useState } from 'react'
-import { firebaseAuth } from '../firebase/firebase'
-import { getDataSourceMode } from '../services/articleRepository'
+import { firebaseAuth } from '../database/firebase'
+import { getDataSourceMode } from '../database/articleRepository'
 
 type Props = {
   children: React.ReactNode

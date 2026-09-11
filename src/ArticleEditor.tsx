@@ -1,11 +1,11 @@
 import { Alert, Autocomplete, Box, Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack, TextField, Typography } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { deleteArticle, fetchCategories, getDataSourceMode, saveArticle } from '../services/articleRepository'
-import { firebaseAuth } from '../firebase/firebase'
-import type { Article, ArticleBlock, CategoryId, EditorType } from '../types/article'
-import { CustomEditor } from './CustomEditor'
-import { TiptapEditor } from './TiptapEditor'
-import { LexicalEditor } from './LexicalEditor'
+import { deleteArticle, fetchCategories, getDataSourceMode, saveArticle } from './database/articleRepository'
+import { firebaseAuth } from './database/firebase'
+import type { Article, ArticleBlock, CategoryId, EditorType } from './types/article'
+import { CustomEditor } from './editor/custom/CustomEditor'
+import { TiptapEditor } from './editor/tiptap/TiptapEditor'
+import { LexicalEditor } from './editor/lexical/LexicalEditor'
 
 type EditorMode = 'create' | 'edit'
 

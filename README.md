@@ -64,10 +64,10 @@ with valid project credentials.
 
 ## 3) Add a new article
 
-1. Open the admin page at:
+1. Open the user page at:
 
 ```text
-/#/admin
+/#/user
 ```
 
 2. Select the backend chip:
@@ -89,10 +89,10 @@ with valid project credentials.
 
 ## 4) Update an existing article
 
-1. Open the admin page at:
+1. Open the user page at:
 
 ```text
-/#/admin
+/#/user
 ```
 
 2. Load the article you want to edit.
@@ -105,7 +105,7 @@ with valid project credentials.
 
 ## 5) Delete an article
 
-1. Open the article in the admin editor.
+1. Open the article in the user editor.
 2. Click Delete article.
 3. The item is removed from the active backend.
 

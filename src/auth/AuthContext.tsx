@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { login as loginRequest, logout as logoutRequest, restoreSession, saveThemePreference } from '../services/localAuth'
-import type { LocalUser, ThemeMode } from '../services/localAuth'
+import { login as loginRequest, logout as logoutRequest, restoreSession, saveThemePreference } from './localAuth'
+import type { LocalUser, ThemeMode } from './localAuth'
 import { AuthContext } from './useAuth'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
