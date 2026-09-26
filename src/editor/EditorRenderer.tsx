@@ -1,8 +1,21 @@
 import type { ReactNode } from 'react'
-import { CustomReader } from './custom/CustomReader'
-import { LexicalReader } from './lexical/LexicalReader'
-import { TiptapReader } from './tiptap/TiptapReader'
+import { Suspense, lazy } from 'react'
 import type { EditorType } from '../types/article'
+
+const CustomReader = lazy(async () => {
+  const module = await import('./custom/CustomReader')
+  return { default: module.CustomReader }
+})
+
+const LexicalReader = lazy(async () => {
+  const module = await import('./lexical/LexicalReader')
+  return { default: module.LexicalReader }
+})
+
+const TiptapReader = lazy(async () => {
+  const module = await import('./tiptap/TiptapReader')
+  return { default: module.TiptapReader }
+})
 
 type Props = {
   kind: EditorType
@@ -11,13 +24,27 @@ type Props = {
 }
 
 export function EditorRenderer({ kind, content = '', rawJson = {} }: Props): ReactNode {
+  const fallback = <div>Loading reader...</div>
+
   switch (kind) {
     case 'tiptap':
-      return <TiptapReader rawJson={rawJson} content={content} />
+      return (
+        <Suspense fallback={fallback}>
+          <TiptapReader rawJson={rawJson} content={content} />
+        </Suspense>
+      )
     case 'lexical':
-      return <LexicalReader rawJson={rawJson} content={content} />
+      return (
+        <Suspense fallback={fallback}>
+          <LexicalReader rawJson={rawJson} content={content} />
+        </Suspense>
+      )
     case 'custom':
     default:
-      return <CustomReader content={content} />
+      return (
+        <Suspense fallback={fallback}>
+          <CustomReader content={content} />
+        </Suspense>
+      )
   }
 }

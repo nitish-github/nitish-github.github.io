@@ -5,6 +5,7 @@ export function normalizeArticle(input: Partial<Article> & { id?: string; title?
   const now = new Date().toISOString()
 
   return {
+    owner: input.owner ?? '',
     id: input.id ?? `${categoryIds[0] ?? 'uncategorized'}-${Date.now()}`,
     title: input.title ?? 'Untitled article',
     slug: input.slug ?? `${input.title ?? 'untitled'}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),

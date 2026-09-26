@@ -1,11 +1,23 @@
 import { Alert, Autocomplete, Box, Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack, TextField, Typography } from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { deleteArticle, fetchCategories, getDataSourceMode, saveArticle } from './database/articleRepository'
 import { firebaseAuth } from './database/firebase'
 import type { Article, ArticleBlock, CategoryId, EditorType } from './types/article'
-import { CustomEditor } from './editor/custom/CustomEditor'
-import { TiptapEditor } from './editor/tiptap/TiptapEditor'
-import { LexicalEditor } from './editor/lexical/LexicalEditor'
+
+const CustomEditor = lazy(async () => {
+  const module = await import('./editor/custom/CustomEditor')
+  return { default: module.CustomEditor }
+})
+
+const TiptapEditor = lazy(async () => {
+  const module = await import('./editor/tiptap/TiptapEditor')
+  return { default: module.TiptapEditor }
+})
+
+const LexicalEditor = lazy(async () => {
+  const module = await import('./editor/lexical/LexicalEditor')
+  return { default: module.LexicalEditor }
+})
 
 type EditorMode = 'create' | 'edit'
 
@@ -200,6 +212,7 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
     const slug = buildGeneratedSlug(title, articleId)
 
     return {
+      owner: article?.owner || firebaseAuth.currentUser?.uid || '',
       id: articleId,
       title,
       slug,
@@ -347,25 +360,31 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
                   </Button>
                 </Stack>
                 {(block.contents[0]?.editorType ?? 'tiptap') === 'custom' && (
-                  <CustomEditor
-                    content={getBlockEditorContent(block)}
-                    onChange={(value) => handleEditorChange(block.id, value)}
-                    editable={true}
-                  />
+                  <Suspense fallback={<Box sx={{ p: 2 }}>Loading editor...</Box>}>
+                    <CustomEditor
+                      content={getBlockEditorContent(block)}
+                      onChange={(value) => handleEditorChange(block.id, value)}
+                      editable={true}
+                    />
+                  </Suspense>
                 )}
                 {(block.contents[0]?.editorType ?? 'tiptap') === 'tiptap' && (
-                  <TiptapEditor
-                    content={getBlockEditorContent(block)}
-                    onChange={(value) => handleEditorChange(block.id, value)}
-                    editable={true}
-                  />
+                  <Suspense fallback={<Box sx={{ p: 2 }}>Loading editor...</Box>}>
+                    <TiptapEditor
+                      content={getBlockEditorContent(block)}
+                      onChange={(value) => handleEditorChange(block.id, value)}
+                      editable={true}
+                    />
+                  </Suspense>
                 )}
                 {(block.contents[0]?.editorType ?? 'tiptap') === 'lexical' && (
-                  <LexicalEditor
-                    content={getBlockEditorContent(block)}
-                    onChange={(value) => handleEditorChange(block.id, value)}
-                    editable={true}
-                  />
+                  <Suspense fallback={<Box sx={{ p: 2 }}>Loading editor...</Box>}>
+                    <LexicalEditor
+                      content={getBlockEditorContent(block)}
+                      onChange={(value) => handleEditorChange(block.id, value)}
+                      editable={true}
+                    />
+                  </Suspense>
                 )}
               </Box>
             ))}

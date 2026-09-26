@@ -23,6 +23,12 @@ export type ArticleReference = {
   url: string
 }
 
+export type Owner = {
+  owner: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type ArticleBlock = {
   id: string
   type: ContentType
@@ -30,7 +36,7 @@ export type ArticleBlock = {
   contents: contentBlock[]
 }
 
-export type Article = {
+export type Article = Owner & {
   id: string
   title: string
   slug: string
@@ -38,8 +44,6 @@ export type Article = {
   tags: string[]
   summary: string
   references: ArticleReference[]
-  createdAt: string
-  updatedAt: string
   contentBlocks: Record<number, ArticleBlock> //number is sequence number of the content block in the article, starting from 0 
 }
 
