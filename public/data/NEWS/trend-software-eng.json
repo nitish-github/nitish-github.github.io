@@ -1,0 +1,27 @@
+{
+  "id": "trend-software-eng",
+  "title": "Software engineering trends",
+  "slug": "trend-software-eng",
+  "tags": ["news", "trend", "software-engineering"],
+  "summary": "A sample article exploring current trends in software engineering.",
+  "references": [],
+  "createdAt": "2026-05-11T09:00:00.000Z",
+  "updatedAt": "2026-05-11T09:00:00.000Z",
+  "contentBlocks": {
+    "0": {
+      "id": "trend-software-eng-1",
+      "type": "Doc",
+      "order": 0,
+      "contents": [
+        {
+          "id": "trend-software-eng-1-content",
+          "editorType": "custom",
+          "contents": {
+            "text": "Teams are adopting AI-assisted development while investing in code quality, security, and maintainable systems."
+          }
+        }
+      ]
+    }
+  },
+  "category_id": ["NEWS-TREND"]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "brief-10-May",
+  "title": "Brief: 10 May",
+  "slug": "brief-10-may",
+  "tags": ["news", "brief"],
+  "summary": "A sample short-format news update for 10 May.",
+  "references": [],
+  "createdAt": "2026-05-10T08:00:00.000Z",
+  "updatedAt": "2026-05-10T08:00:00.000Z",
+  "contentBlocks": {
+    "0": {
+      "id": "brief-10-May-1",
+      "type": "Doc",
+      "order": 0,
+      "contents": [
+        {
+          "id": "brief-10-May-1-content",
+          "editorType": "custom",
+          "contents": {
+            "text": "A sample daily briefing with a concise summary of key developments."
+          }
+        }
+      ]
+    }
+  },
+  "category_id": ["NEWS-BRIEF"]
+}

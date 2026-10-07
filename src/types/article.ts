@@ -50,7 +50,9 @@ export type Article = Owner & {
 export type CategoryManifestItem = {
   category_id: CategoryId
   description: string
-  articleIds: string[]
+  articleIds?: string[]
+  path?: string
+  categories?: CategoryManifestItem[]
 }
 
 export type ArticleManifest = {

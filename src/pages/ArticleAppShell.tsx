@@ -1,21 +1,25 @@
-import { Button, Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Drawer, FormControlLabel, IconButton, List, ListItemButton, ListItemText, Menu, MenuItem, Stack, Switch, TextField, Toolbar, Typography } from '@mui/material'
+import { Button, Box, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Drawer, FormControlLabel, IconButton, List, ListItemButton, ListItemText, Menu, MenuItem, Stack, Switch, TextField, Toolbar, Typography } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { firebaseAuth } from '../database/firebase'
 import { useAuth } from '../auth/useAuth'
-import type { Article, CategoryId } from '../types/article'
-import { fetchCategories, fetchCategoryArticles, fetchMyArticles, getCachedCategoryArticles, getDataSourceMode } from '../database/articleRepository'
+import type { Article, CategoryId, CategoryManifestItem } from '../types/article'
+import { fetchCategories, fetchCategoryArticles, fetchCategoryTree, fetchMyArticles, getCachedCategoryArticles, getDataSourceMode } from '../database/articleRepository'
 
 export function ArticleAppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const { category, slug } = useParams()
   const [staticCategories, setStaticCategories] = useState<CategoryId[]>([])
+  const [staticCategoryTree, setStaticCategoryTree] = useState<CategoryManifestItem[]>([])
   const [myCategories, setMyCategories] = useState<CategoryId[]>([])
   const [staticArticlesByCategory, setStaticArticlesByCategory] = useState<Record<CategoryId, Article[]>>({})
   const [myArticlesByCategory, setMyArticlesByCategory] = useState<Record<CategoryId, Article[]>>({})
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
   const [email, setEmail] = useState('demo@example.com')
   const [password, setPassword] = useState('password123')
@@ -39,8 +43,9 @@ export function ArticleAppShell() {
 
   useEffect(() => {
     const load = async () => {
-      const availableCategories = await fetchCategories()
+      const [availableCategories, categoryTree] = await Promise.all([fetchCategories(), fetchCategoryTree()])
       setStaticCategories(availableCategories)
+      setStaticCategoryTree(categoryTree)
       for (const item of availableCategories) {
         const cached = await getCachedCategoryArticles(item)
         if (cached) {
@@ -108,57 +113,73 @@ export function ArticleAppShell() {
     setAccountMenuAnchor(null)
   }
 
-  const renderArticleList = (articles: Article[]) => (
-    <List>
-      {articles.map((article) => (
-        <ListItemButton
-          key={article.id}
-          selected={currentArticle?.id === article.id}
-          onClick={() => {
-            setMobileOpen(false)
-            navigate(`${isMyArticles ? '/my-articles/' : '/'}${selectedCategory}/${article.slug}`)
-          }}
-          sx={{ borderRadius: 2, mb: 1 }}
-        >
-          <ListItemText primary={article.title} secondary={article.summary} />
-        </ListItemButton>
-      ))}
+  const renderCategoryTree = (
+    categories: CategoryManifestItem[],
+    articlesByCategory: Record<CategoryId, Article[]>,
+    section: 'static' | 'my',
+    depth = 0,
+  ) => (
+    <List disablePadding>
+      {categories.map((item) => {
+        const key = `${section}:${item.category_id}`
+        const articles = articlesByCategory[item.category_id] ?? []
+        const children = item.categories ?? []
+        const expandable = children.length > 0 || articles.length > 0
+        const expanded = expandedCategories[key] ?? (depth === 0 || selectedCategory === item.category_id)
+
+        return (
+          <Box key={item.category_id}>
+            <ListItemButton
+              selected={section === (isMyArticles ? 'my' : 'static') && selectedCategory === item.category_id}
+              onClick={() => expandable && setExpandedCategories((previous) => ({ ...previous, [key]: !expanded }))}
+              aria-expanded={expandable ? expanded : undefined}
+              sx={{ borderRadius: 1, minHeight: 40, pl: 2 + depth * 2 }}
+            >
+              <ListItemText primary={item.category_id} />
+              {expandable && (expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />)}
+            </ListItemButton>
+            {expandable && (
+              <Collapse in={expanded} timeout="auto" unmountOnExit>
+                {children.length > 0
+                  ? renderCategoryTree(children, articlesByCategory, section, depth + 1)
+                  : (
+                    <List disablePadding>
+                      {articles.map((article) => (
+                        <ListItemButton
+                          key={article.id}
+                          selected={currentArticle?.id === article.id}
+                          onClick={() => {
+                            setMobileOpen(false)
+                            navigate(`${section === 'my' ? '/my-articles/' : '/'}${item.category_id}/${article.slug}`)
+                          }}
+                          sx={{ pl: 4 + depth * 2, borderRadius: 1, minHeight: 36 }}
+                        >
+                          <ListItemText primary={article.title} sx={{ '& .MuiListItemText-primary': { typography: 'body2' } }} />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                  )}
+              </Collapse>
+            )}
+          </Box>
+        )
+      })}
     </List>
   )
 
   const drawer = (
     <Box sx={{ width: 300, p: 2 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>Articles</Typography>
-      <List>
-        {staticCategories.map((item) => (
-          <ListItemButton key={item} selected={!isMyArticles && selectedCategory === item} onClick={() => {
-            setMobileOpen(false)
-            const first = staticArticlesByCategory[item]?.[0]
-            navigate(first ? `/${item}/${first.slug}` : `/${item}`)
-          }} sx={{ borderRadius: 2, mb: 1 }}>
-            <ListItemText primary={item} />
-          </ListItemButton>
-        ))}
-      </List>
+      {renderCategoryTree(staticCategoryTree, staticArticlesByCategory, 'static')}
 
       <Divider sx={{ my: 2 }} />
 
       <Typography variant="h6" sx={{ mb: 2 }}>My Articles</Typography>
-      <List>
-        {myCategories.map((item) => (
-          <ListItemButton key={item} selected={isMyArticles && selectedCategory === item} onClick={() => {
-            setMobileOpen(false)
-            const first = myArticlesByCategory[item]?.[0]
-            navigate(first ? `/my-articles/${item}/${first.slug}` : `/my-articles/${item}`)
-          }} sx={{ borderRadius: 2, mb: 1 }}>
-            <ListItemText primary={item} />
-          </ListItemButton>
-        ))}
-      </List>
-
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>{selectedCategory} articles</Typography>
-      {renderArticleList(visibleArticles)}
+      {renderCategoryTree(
+        myCategories.map((category_id) => ({ category_id, description: '', articleIds: [] })),
+        myArticlesByCategory,
+        'my',
+      )}
     </Box>
   )
 

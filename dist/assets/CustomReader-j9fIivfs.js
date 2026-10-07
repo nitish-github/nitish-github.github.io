@@ -1,0 +1,1 @@
+import{f as e}from"./lexical-vendor-DlpXtEYt.js";import{F as t,M as n}from"./mui-vendor-C4ficzqj.js";var r=e();function i({content:e}){return(0,r.jsx)(n,{sx:{whiteSpace:`pre-wrap`,lineHeight:1.8},children:(0,r.jsx)(t,{variant:`body1`,children:e})})}export{i as CustomReader};

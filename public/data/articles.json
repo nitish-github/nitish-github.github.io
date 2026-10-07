@@ -8,7 +8,21 @@
     {
       "category_id": "NEWS",
       "description": "Daily updates and commentary",
-      "articleIds": ["news-brief", "news-trends"]
+      "articleIds": [],
+      "categories": [
+        {
+          "category_id": "NEWS-BRIEF",
+          "description": "Short news updates",
+          "path": "NEWS",
+          "articleIds": ["brief-11-May", "brief-10-May", "news-brief"]
+        },
+        {
+          "category_id": "NEWS-TREND",
+          "description": "Longer trend articles",
+          "path": "NEWS",
+          "articleIds": ["trend-software-eng", "trend-mobile-phones", "news-trends"]
+        }
+      ]
     },
     {
       "category_id": "JAVA",

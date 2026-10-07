@@ -1,4 +1,4 @@
-import type { Article, ArticleManifest, CategoryId, DataSourceMode } from '../types/article'
+import type { Article, ArticleManifest, CategoryId, CategoryManifestItem, DataSourceMode } from '../types/article'
 import { readCache, writeCache } from './idb'
 import { deleteArticleFromFirebase, fetchArticlesFromFirebase, saveArticleToFirebase } from './firebaseRepository'
 import { getAuthToken } from '../auth/localAuth'
@@ -37,21 +37,42 @@ export async function fetchArticleManifest(): Promise<ArticleManifest> {
 
 export async function fetchCategories(): Promise<CategoryId[]> {
   const manifest = await fetchArticleManifest()
-  return manifest.categories.map((item) => item.category_id)
+  const getLeafCategories = (categories: ArticleManifest['categories']): CategoryId[] =>
+    categories.flatMap((item) => (
+      item.categories?.length
+        ? getLeafCategories(item.categories)
+        : [item.category_id]
+    ))
+
+  return getLeafCategories(manifest.categories)
+}
+
+export async function fetchCategoryTree(): Promise<ArticleManifest['categories']> {
+  const manifest = await fetchArticleManifest()
+  return manifest.categories
 }
 
 export async function fetchCategoryArticles(category: CategoryId): Promise<Article[]> {
   const categoryKey = `${category.toLowerCase()}-articles`
   const manifest = await fetchArticleManifest()
-  const entries = manifest.categories.find((item) => item.category_id === category)
+  const findCategory = (categories: ArticleManifest['categories']): CategoryManifestItem | undefined => {
+    for (const item of categories) {
+      if (item.category_id === category) return item
+      const nested: CategoryManifestItem | undefined = item.categories && findCategory(item.categories)
+      if (nested) return nested
+    }
 
-  if (!entries) {
+    return undefined
+  }
+  const entries = findCategory(manifest.categories)
+
+  if (!entries || !entries.articleIds?.length) {
     return []
   }
 
   const articles = await Promise.all(
     entries.articleIds.map(async (articleId) => {
-      const response = await fetch(`/data/${category}/${articleId}.json`)
+      const response = await fetch(`/data/${entries.path ?? category}/${articleId}.json`)
       if (!response.ok) {
         throw new Error(`Unable to fetch article ${articleId}`)
       }
