@@ -79,22 +79,49 @@ export function ArticleAppShell() {
     void load()
   }, [category, isSqliteMode, localUser?.id, firebaseUser?.uid])
 
-  const visibleArticles = useMemo(
-    () => (isMyArticles ? myArticlesByCategory[selectedCategory] : staticArticlesByCategory[selectedCategory]) ?? [],
-    [isMyArticles, myArticlesByCategory, selectedCategory, staticArticlesByCategory],
-  )
+  const { firstLevelCategory, visibleArticles } = useMemo(() => {
+    if (isMyArticles) {
+      return {
+        firstLevelCategory: selectedCategory,
+        visibleArticles: myArticlesByCategory[selectedCategory] ?? [],
+      }
+    }
+
+    let selectedNode: CategoryManifestItem | undefined
+    let firstLevelNode: CategoryManifestItem | undefined
+    const findCategory = (
+      categories: CategoryManifestItem[],
+      root?: CategoryManifestItem,
+    ): CategoryManifestItem | undefined => {
+      for (const item of categories) {
+        const currentRoot = root ?? item
+        if (item.category_id === selectedCategory) {
+          selectedNode = item
+          firstLevelNode = currentRoot
+          return item
+        }
+        const found = item.categories && findCategory(item.categories, currentRoot)
+        if (found) return found
+      }
+      return undefined
+    }
+
+    findCategory(staticCategoryTree)
+    const collectArticles = (item: CategoryManifestItem): Article[] => [
+      ...(staticArticlesByCategory[item.category_id] ?? []),
+      ...(item.categories ?? []).flatMap(collectArticles),
+    ]
+
+    return {
+      firstLevelCategory: firstLevelNode?.category_id ?? selectedCategory,
+      visibleArticles: selectedNode ? collectArticles(selectedNode) : [],
+    }
+  }, [isMyArticles, myArticlesByCategory, selectedCategory, staticArticlesByCategory, staticCategoryTree])
 
   const currentArticle = useMemo(
-    () => visibleArticles.find((article) => article.slug === slug) ?? visibleArticles[0] ?? null,
-    [slug, visibleArticles],
+    () => slug ? visibleArticles.find((article) => article.slug === slug) ?? null : category ? null : visibleArticles[0] ?? null,
+    [category, slug, visibleArticles],
   )
-
-  useEffect(() => {
-    const availableCategories = isMyArticles ? myCategories : staticCategories
-    if (category && availableCategories.includes(category as CategoryId) && !slug && currentArticle && currentArticle.category_id.includes(selectedCategory)) {
-      navigate(`${isMyArticles ? '/my-articles/' : '/'}${selectedCategory}/${currentArticle.slug}`, { replace: true })
-    }
-  }, [category, currentArticle, isMyArticles, myCategories, navigate, selectedCategory, slug, staticCategories])
 
   const handleLogin = async () => {
     try {
@@ -131,12 +158,27 @@ export function ArticleAppShell() {
           <Box key={item.category_id}>
             <ListItemButton
               selected={section === (isMyArticles ? 'my' : 'static') && selectedCategory === item.category_id}
-              onClick={() => expandable && setExpandedCategories((previous) => ({ ...previous, [key]: !expanded }))}
-              aria-expanded={expandable ? expanded : undefined}
+              onClick={() => {
+                setMobileOpen(false)
+                navigate(`${section === 'my' ? '/my-articles/' : '/'}${item.category_id}`)
+              }}
               sx={{ borderRadius: 1, minHeight: 40, pl: 2 + depth * 2 }}
             >
               <ListItemText primary={item.category_id} />
-              {expandable && (expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />)}
+              {expandable && (
+                <IconButton
+                  size="small"
+                  aria-label={`${expanded ? 'Collapse' : 'Expand'} ${item.category_id}`}
+                  aria-expanded={expanded}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setExpandedCategories((previous) => ({ ...previous, [key]: !expanded }))
+                  }}
+                  sx={{ mr: -1 }}
+                >
+                  {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </IconButton>
+              )}
             </ListItemButton>
             {expandable && (
               <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -276,7 +318,7 @@ export function ArticleAppShell() {
           </DialogActions>
         </Dialog>
 
-        <Outlet context={{ article: currentArticle, category: selectedCategory }} />
+        <Outlet context={{ article: currentArticle, category: selectedCategory, firstLevelCategory, articles: visibleArticles, isMyArticles }} />
       </Box>
     </Box>
   )
