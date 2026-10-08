@@ -19,6 +19,11 @@ const LexicalEditor = lazy(async () => {
   return { default: module.LexicalEditor }
 })
 
+const MarkdownEditor = lazy(async () => {
+  const module = await import('./editor/markdown/MarkdownEditor')
+  return { default: module.MarkdownEditor }
+})
+
 type EditorMode = 'create' | 'edit'
 
 type Props = {
@@ -37,7 +42,7 @@ function buildGeneratedSlug(title: string, id: string): string {
 }
 
 function createDefaultContent(editorType: EditorType): Record<string, unknown> | string {
-  if (editorType === 'custom') return ''
+  if (editorType === 'custom' || editorType === 'markdown') return ''
 
   if (editorType === 'lexical') {
     return {
@@ -104,7 +109,7 @@ function toArticleDraft(article: Partial<Article> | null | undefined) {
 
 function getBlockEditorContent(block: ContentBlockDraft): Record<string, unknown> | string {
   const content = block.contents[0]
-  if (content?.editorType === 'custom' && typeof content.contents.text === 'string') return content.contents.text
+  if ((content?.editorType === 'custom' || content?.editorType === 'markdown') && typeof content.contents.text === 'string') return content.contents.text
   return content?.contents ?? {}
 }
 
@@ -346,6 +351,7 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
                       onChange={(event) => handleEditorTypeChange(block.id, event.target.value as EditorType)}
                     >
                       <MenuItem value="custom">Custom</MenuItem>
+                      <MenuItem value="markdown">Markdown</MenuItem>
                       <MenuItem value="tiptap">Tiptap</MenuItem>
                       <MenuItem value="lexical">Lexical</MenuItem>
                     </Select>
@@ -383,6 +389,14 @@ export function ArticleEditor({ mode = 'create', article, onSaved, onCancel, onD
                       content={getBlockEditorContent(block)}
                       onChange={(value) => handleEditorChange(block.id, value)}
                       editable={true}
+                    />
+                  </Suspense>
+                )}
+                {(block.contents[0]?.editorType ?? 'tiptap') === 'markdown' && (
+                  <Suspense fallback={<Box sx={{ p: 2 }}>Loading editor...</Box>}>
+                    <MarkdownEditor
+                      content={String(getBlockEditorContent(block))}
+                      onChange={(value) => handleEditorChange(block.id, { text: value })}
                     />
                   </Suspense>
                 )}

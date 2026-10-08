@@ -1,4 +1,6 @@
 import type { Article, ArticleManifest, CategoryId, CategoryManifestItem, DataSourceMode } from '../types/article'
+import { normalizeArticle } from '../lib/articleData'
+import { parse as parseYaml } from 'yaml'
 import { readCache, writeCache } from './idb'
 import { deleteArticleFromFirebase, fetchArticlesFromFirebase, saveArticleToFirebase } from './firebaseRepository'
 import { getAuthToken } from '../auth/localAuth'
@@ -72,9 +74,13 @@ export async function fetchCategoryArticles(category: CategoryId): Promise<Artic
 
   const articles = await Promise.all(
     entries.articleIds.map(async (articleId) => {
-      const response = await fetch(`/data/${entries.path ?? category}/${articleId}.json`)
+      const extension = entries.format === 'markdown' ? 'md' : 'json'
+      const response = await fetch(`/data/${entries.path ?? category}/${articleId}.${extension}`)
       if (!response.ok) {
         throw new Error(`Unable to fetch article ${articleId}`)
+      }
+      if (entries.format === 'markdown') {
+        return parseMarkdownArticle(await response.text(), category, articleId)
       }
       return response.json() as Promise<Article>
     }),
@@ -82,6 +88,45 @@ export async function fetchCategoryArticles(category: CategoryId): Promise<Artic
 
   await writeCache(categoryKey, articles)
   return articles
+}
+
+function parseMarkdownArticle(source: string, category: CategoryId, articleId: string): Article {
+  const frontMatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  const parsedMetadata: unknown = frontMatter ? parseYaml(frontMatter[1]) : {}
+  const metadata = parsedMetadata && typeof parsedMetadata === 'object' && !Array.isArray(parsedMetadata)
+    ? parsedMetadata as Record<string, unknown>
+    : {}
+  const markdown = frontMatter ? source.slice(frontMatter[0].length) : source
+  const references = Array.isArray(metadata.references)
+    ? metadata.references.flatMap((reference: unknown) => {
+      if (!reference || typeof reference !== 'object') return []
+      const item = reference as Record<string, unknown>
+      return typeof item.label === 'string' && typeof item.url === 'string'
+        ? [{ label: item.label, url: item.url }]
+        : []
+    })
+    : []
+  const contentId = `${articleId}-markdown`
+
+  return normalizeArticle({
+    id: articleId,
+    title: typeof metadata.title === 'string' ? metadata.title : articleId,
+    slug: typeof metadata.slug === 'string' ? metadata.slug : articleId,
+    category_id: [category],
+    tags: Array.isArray(metadata.tags) ? metadata.tags.filter((tag: unknown): tag is string => typeof tag === 'string') : [],
+    summary: typeof metadata.summary === 'string' ? metadata.summary : '',
+    references,
+    createdAt: typeof metadata.createdAt === 'string' ? metadata.createdAt : undefined,
+    updatedAt: typeof metadata.updatedAt === 'string' ? metadata.updatedAt : undefined,
+    contentBlocks: {
+      0: {
+        id: contentId,
+        type: 'Doc',
+        order: 0,
+        contents: [{ id: `${contentId}-content`, editorType: 'markdown', contents: { text: markdown.trim() } }],
+      },
+    },
+  })
 }
 
 export async function fetchMyArticles(category?: CategoryId): Promise<Article[]> {

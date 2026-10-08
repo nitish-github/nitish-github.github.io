@@ -42,7 +42,10 @@ export function ArticleReader({ article }: Props) {
         .flatMap((block) => block.contents.map((contentBlock) => ({ block, contentBlock })))
         .map(({ block, contentBlock }) => {
           const content = getBlockText(contentBlock)
-          const kind = getEditorType(contentBlock.contents)
+          const kind = getEditorType({
+            ...contentBlock.contents,
+            editorType: contentBlock.editorType,
+          })
 
           return (
             <Box key={`${block.id}-${contentBlock.id}`} sx={{ mb: 2 }}>

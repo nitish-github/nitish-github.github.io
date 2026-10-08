@@ -8,7 +8,7 @@ export type Category = {
   description: string
 }
 
-export type EditorType = 'custom' | 'tiptap' | 'lexical'
+export type EditorType = 'custom' | 'tiptap' | 'lexical' | 'markdown'
 
 export type ContentType = 'Doc' | 'Questions' | 'quote' | 'list' | 'code'
 
@@ -50,6 +50,7 @@ export type Article = Owner & {
 export type CategoryManifestItem = {
   category_id: CategoryId
   description: string
+  format?: 'markdown'
   articleIds?: string[]
   path?: string
   categories?: CategoryManifestItem[]

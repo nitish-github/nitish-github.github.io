@@ -3,7 +3,9 @@
     {
       "category_id": "HOW TO DO",
       "description": "Guide to using this application with personal firebase and firestore database",
-      "articleIds": ["firebase-connection"]
+      "articleIds": [
+        "firebase-connection"
+      ]
     },
     {
       "category_id": "NEWS",
@@ -14,20 +16,33 @@
           "category_id": "NEWS-BRIEF",
           "description": "Short news updates",
           "path": "NEWS",
-          "articleIds": ["brief-11-May", "brief-10-May", "news-brief"]
+          "articleIds": [
+            "brief-11-May",
+            "brief-10-May",
+            "news-brief"
+          ]
         },
         {
           "category_id": "NEWS-TREND",
           "description": "Longer trend articles",
           "path": "NEWS",
-          "articleIds": ["trend-software-eng", "trend-mobile-phones", "news-trends"]
+          "articleIds": [
+            "trend-software-eng",
+            "trend-mobile-phones",
+            "news-trends"
+          ]
         }
       ]
     },
     {
-      "category_id": "JAVA",
-      "description": "Java platform insights",
-      "articleIds": ["java-core", "java-cloud"]
+      "category_id": "AI",
+      "description": "Artificial Intelligence insights",
+      "path": "AI",
+      "format": "markdown",
+      "articleIds": [
+        "ai-intro",
+        "ai-applications"
+      ]
     }
   ]
 }

@@ -73,7 +73,17 @@ Available endpoints:
 - GET /api/articles/:category/:slug
 - POST /api/articles
 
-## 5) Build for production
+## 5) Run the Python FastAPI backend
+
+An alternative Python backend with the same API routes and SQLite database is
+available in `api-python/`. See [api-python/README.md](api-python/README.md) for
+virtual-environment setup, configuration, and the full endpoint list. By
+default it listens on port `8000` and shares `api/data/articles.db`.
+
+The frontend currently connects to the Node backend on port `3001`; point its
+API URLs at port `8000` or configure a proxy to use FastAPI.
+
+## 6) Build for production
 
 From the project root:
 
@@ -87,7 +97,7 @@ The build output is generated in:
 dist/
 ```
 
-## 6) Deploy to GitHub Pages
+## 7) Deploy to GitHub Pages
 
 The project includes a Pages deployment workflow in:
 
@@ -97,7 +107,7 @@ The project includes a Pages deployment workflow in:
 
 Push to the main branch, or run the workflow manually from GitHub Actions.
 
-## 7) Firebase mode
+## 8) Firebase mode
 
 The code includes a Firebase-ready configuration in:
 
@@ -107,7 +117,7 @@ src/firebase/firebase.ts
 
 Replace the demo config with your real Firebase project values to enable the authenticated production write path.
 
-## 8) Useful commands
+## 9) Useful commands
 
 ```bash
 npm run dev

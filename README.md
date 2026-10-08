@@ -81,11 +81,27 @@ with valid project credentials.
    - Tags
    - Summary
    - References
-   - Content
+   - Content (choose Markdown, Tiptap, Lexical, or Custom)
 
 4. Click Create article.
 
 5. The article is saved to the chosen backend and becomes available in the main article list once refreshed.
+
+## Add static Markdown articles
+
+Static articles can be served directly from `public/data` without using the API. Add a category entry to `public/data/articles.json` with `format` set to `markdown` and its folder in `path`:
+
+```json
+{
+  "category_id": "AI",
+  "description": "Artificial Intelligence insights",
+  "path": "AI",
+  "format": "markdown",
+  "articleIds": ["ai-intro"]
+}
+```
+
+Create `public/data/AI/ai-intro.md`. Optional YAML front matter supplies article metadata (`title`, `slug`, `summary`, `tags`, `references`, `createdAt`, and `updatedAt`); the remaining file content is rendered as Markdown. GitHub Flavored Markdown tables, lists, and task lists are supported.
 
 ## 4) Update an existing article
 
@@ -143,4 +159,3 @@ The repo includes a Pages workflow in:
 ```
 
 Push to the main branch or trigger the workflow manually from GitHub Actions.
-

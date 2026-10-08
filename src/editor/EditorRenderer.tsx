@@ -17,6 +17,11 @@ const TiptapReader = lazy(async () => {
   return { default: module.TiptapReader }
 })
 
+const MarkdownReader = lazy(async () => {
+  const module = await import('./markdown/MarkdownReader')
+  return { default: module.MarkdownReader }
+})
+
 type Props = {
   kind: EditorType
   content?: string
@@ -37,6 +42,12 @@ export function EditorRenderer({ kind, content = '', rawJson = {} }: Props): Rea
       return (
         <Suspense fallback={fallback}>
           <LexicalReader rawJson={rawJson} content={content} />
+        </Suspense>
+      )
+    case 'markdown':
+      return (
+        <Suspense fallback={fallback}>
+          <MarkdownReader content={content} />
         </Suspense>
       )
     case 'custom':

@@ -10,10 +10,10 @@ type EditorTextSource = {
 }
 
 export function getContentType(rawJson: Record<string, unknown> | undefined): ContentSourceKey {
-  const value = rawJson?.contentType ?? rawJson?.editor
+  const value = rawJson?.contentType ?? rawJson?.editorType ?? rawJson?.editor
   const source = typeof value === 'string' ? value.toLowerCase() : ''
 
-  if (source === 'tiptap' || source === 'lexical' || source === 'custom') return source
+  if (source === 'tiptap' || source === 'lexical' || source === 'custom' || source === 'markdown') return source
   if (rawJson && typeof rawJson.type === 'string' && rawJson.type === 'doc') return 'tiptap'
   if (rawJson && ('root' in rawJson || 'children' in rawJson)) return 'lexical'
   return 'custom'
